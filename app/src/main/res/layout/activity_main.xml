@@ -1,14 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="20dp"
     android:background="#FFF8F0">
 
+<LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="20dp">
+
     <TextView
-        android:text="📠 Niimbot Barro Tal Ves"
-        android:textSize="22sp"
+        android:text="📠 Niimbot Barro — Calibración"
+        android:textSize="20sp"
         android:textStyle="bold"
         android:textColor="#8B3A0F"
         android:gravity="center"
@@ -18,13 +22,13 @@
 
     <TextView
         android:id="@+id/tvStatus"
-        android:text="⏸ Listo para conectar"
-        android:textSize="16sp"
+        android:text="⏸ Sin conectar"
+        android:textSize="15sp"
         android:gravity="center"
         android:textColor="#555"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingBottom="20dp"/>
+        android:paddingBottom="16dp"/>
 
     <Button
         android:id="@+id/btnConnect"
@@ -34,27 +38,8 @@
         android:backgroundTint="#1565C0"
         android:textColor="#FFF"
         android:textSize="16sp"
-        android:layout_marginBottom="12dp"/>
-
-    <Button
-        android:id="@+id/btnToggle"
-        android:text="▶ Iniciar escucha"
-        android:layout_width="match_parent"
-        android:layout_height="56dp"
-        android:backgroundTint="#2E7D32"
-        android:textColor="#FFF"
-        android:textSize="16sp"
         android:layout_marginBottom="20dp"/>
 
-    <TextView
-        android:text="🧪 Modo diagnóstico"
-        android:textSize="14sp"
-        android:textStyle="bold"
-        android:textColor="#8B3A0F"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingBottom="6dp"/>
-
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
@@ -67,18 +52,9 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginEnd="6dp">
-
-            <TextView
-                android:text="Ancho (mm)"
-                android:textSize="11sp"
-                android:textColor="#888"/>
-
-            <EditText
-                android:id="@+id/etAncho"
-                android:text="12"
-                android:inputType="numberDecimal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
+            <TextView android:text="Ancho (mm)" android:textSize="11sp" android:textColor="#888"/>
+            <EditText android:id="@+id/etAncho" android:text="12" android:inputType="numberDecimal"
+                android:layout_width="match_parent" android:layout_height="wrap_content"/>
         </LinearLayout>
 
         <LinearLayout
@@ -86,71 +62,11 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="6dp">
-
-            <TextView
-                android:text="Alto (mm)"
-                android:textSize="11sp"
-                android:textColor="#888"/>
-
-            <EditText
-                android:id="@+id/etAlto"
-                android:text="20"
-                android:inputType="numberDecimal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
-        </LinearLayout>
-    </LinearLayout>
-
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingBottom="10dp">
-
-        <LinearLayout
-            android:orientation="vertical"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content">
-
-            <TextView
-                android:text="DPI de la impresora (203 = estándar térmica)"
-                android:textSize="11sp"
-                android:textColor="#888"/>
-
-            <EditText
-                android:id="@+id/etDpi"
-                android:text="203"
-                android:inputType="numberDecimal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
-        </LinearLayout>
-    </LinearLayout>
-
-    <LinearLayout
-        android:orientation="horizontal"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingBottom="10dp">
-
-        <LinearLayout
-            android:orientation="vertical"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_weight="1"
+            android:layout_marginStart="6dp"
             android:layout_marginEnd="6dp">
-
-            <TextView
-                android:text="Letra código (px, 0=auto)"
-                android:textSize="11sp"
-                android:textColor="#888"/>
-
-            <EditText
-                android:id="@+id/etFuenteCodigo"
-                android:text="0"
-                android:inputType="numberDecimal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
+            <TextView android:text="Alto (mm)" android:textSize="11sp" android:textColor="#888"/>
+            <EditText android:id="@+id/etAlto" android:text="20" android:inputType="numberDecimal"
+                android:layout_width="match_parent" android:layout_height="wrap_content"/>
         </LinearLayout>
 
         <LinearLayout
@@ -159,64 +75,24 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginStart="6dp">
-
-            <TextView
-                android:text="Letra nombre (px, 0=auto)"
-                android:textSize="11sp"
-                android:textColor="#888"/>
-
-            <EditText
-                android:id="@+id/etFuenteNombre"
-                android:text="0"
-                android:inputType="numberDecimal"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"/>
+            <TextView android:text="DPI" android:textSize="11sp" android:textColor="#888"/>
+            <EditText android:id="@+id/etDpi" android:text="203" android:inputType="numberDecimal"
+                android:layout_width="match_parent" android:layout_height="wrap_content"/>
         </LinearLayout>
     </LinearLayout>
 
-    <LinearLayout
-        android:orientation="horizontal"
+    <Button
+        android:id="@+id/btnTest"
+        android:text="🧪 Generar y enviar TEST"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingBottom="10dp">
-
-        <Button
-            android:id="@+id/btnGuardar"
-            android:text="💾 Guardar"
-            android:layout_width="0dp"
-            android:layout_height="52dp"
-            android:layout_weight="1"
-            android:backgroundTint="#455A64"
-            android:textColor="#FFF"
-            android:textSize="12sp"
-            android:layout_marginEnd="4dp"/>
-
-        <Button
-            android:id="@+id/btnPreview"
-            android:text="👁 Vista previa"
-            android:layout_width="0dp"
-            android:layout_height="52dp"
-            android:layout_weight="1"
-            android:backgroundTint="#5D4037"
-            android:textColor="#FFF"
-            android:textSize="12sp"
-            android:layout_marginStart="4dp"
-            android:layout_marginEnd="4dp"/>
-
-        <Button
-            android:id="@+id/btnTest"
-            android:text="🧪 Imprimir"
-            android:layout_width="0dp"
-            android:layout_height="52dp"
-            android:layout_weight="1"
-            android:backgroundTint="#8B3A0F"
-            android:textColor="#FFF"
-            android:textSize="12sp"
-            android:layout_marginStart="4dp"/>
-    </LinearLayout>
+        android:layout_height="56dp"
+        android:backgroundTint="#8B3A0F"
+        android:textColor="#FFF"
+        android:textSize="16sp"
+        android:layout_marginBottom="16dp"/>
 
     <TextView
-        android:text="Vista previa (aproximada, ya rotada como sale impresa):"
+        android:text="Vista previa (así se manda a la impresora, ya rotada):"
         android:textSize="11sp"
         android:textColor="#888"
         android:layout_width="match_parent"
@@ -228,15 +104,15 @@
         android:layout_height="wrap_content"
         android:background="#EFEFEF"
         android:padding="8dp"
-        android:layout_marginBottom="14dp">
+        android:layout_marginBottom="16dp">
 
         <ImageView
             android:id="@+id/ivPreview"
             android:layout_width="match_parent"
-            android:layout_height="140dp"
+            android:layout_height="220dp"
             android:scaleType="fitCenter"
             android:background="#FFFFFF"
-            android:contentDescription="Vista previa de la etiqueta"/>
+            android:contentDescription="Vista previa"/>
     </FrameLayout>
 
     <TextView
@@ -246,20 +122,17 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"/>
 
-    <ScrollView
+    <TextView
+        android:id="@+id/tvLog"
+        android:text=""
+        android:textSize="12sp"
+        android:fontFamily="monospace"
+        android:textColor="#333"
+        android:padding="10dp"
+        android:background="#F5F5F5"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1">
-        <TextView
-            android:id="@+id/tvLog"
-            android:text=""
-            android:textSize="12sp"
-            android:fontFamily="monospace"
-            android:textColor="#333"
-            android:padding="10dp"
-            android:background="#F5F5F5"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"/>
-    </ScrollView>
+        android:layout_height="wrap_content"
+        android:minLines="8"/>
 
 </LinearLayout>
+</ScrollView>
