@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="20dp"
+    android:background="#FFF8F0">
+
+    <TextView
+        android:text="📠 Niimbot Barro Tal Ves"
+        android:textSize="22sp"
+        android:textStyle="bold"
+        android:textColor="#8B3A0F"
+        android:gravity="center"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="12dp"/>
+
+    <TextView
+        android:id="@+id/tvStatus"
+        android:text="⏸ Listo para conectar"
+        android:textSize="16sp"
+        android:gravity="center"
+        android:textColor="#555"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="20dp"/>
+
+    <Button
+        android:id="@+id/btnConnect"
+        android:text="🔵 Conectar D110"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:backgroundTint="#1565C0"
+        android:textColor="#FFF"
+        android:textSize="16sp"
+        android:layout_marginBottom="12dp"/>
+
+    <Button
+        android:id="@+id/btnToggle"
+        android:text="▶ Iniciar escucha"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:backgroundTint="#2E7D32"
+        android:textColor="#FFF"
+        android:textSize="16sp"
+        android:layout_marginBottom="20dp"/>
+
+    <TextView
+        android:text="Log:"
+        android:textSize="13sp"
+        android:textColor="#888"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"/>
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1">
+        <TextView
+            android:id="@+id/tvLog"
+            android:text=""
+            android:textSize="12sp"
+            android:fontFamily="monospace"
+            android:textColor="#333"
+            android:padding="10dp"
+            android:background="#F5F5F5"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"/>
+    </ScrollView>
+
+</LinearLayout>
