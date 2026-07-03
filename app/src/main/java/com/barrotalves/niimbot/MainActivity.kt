@@ -42,6 +42,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var etAncho: EditText
     private lateinit var etAlto: EditText
     private lateinit var etDpi: EditText
+    private lateinit var etTipo: EditText
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -68,6 +69,7 @@ class MainActivity : AppCompatActivity() {
         etAncho   = findViewById(R.id.etAncho)
         etAlto    = findViewById(R.id.etAlto)
         etDpi     = findViewById(R.id.etDpi)
+        etTipo    = findViewById(R.id.etTipo)
 
         requestPerms()
 
@@ -192,6 +194,7 @@ class MainActivity : AppCompatActivity() {
         val anchoMm = etAncho.text.toString().toFloatOrNull() ?: 12f
         val altoMm  = etAlto.text.toString().toFloatOrNull() ?: 20f
         val dpi     = etDpi.text.toString().toFloatOrNull() ?: 203f
+        val tipo    = etTipo.text.toString().toIntOrNull() ?: 1
 
         val bmp = generarTest(anchoMm, altoMm, dpi)
         ivPreview.setImageBitmap(conBordeRojo(bmp))
@@ -203,9 +206,9 @@ class MainActivity : AppCompatActivity() {
         }
 
         lifecycleScope.launch(Dispatchers.IO) {
-            ulog("═══ TEST ${anchoMm}×${altoMm}mm @ ${dpi}dpi → ${bmp.width}x${bmp.height}px ═══")
+            ulog("═══ TEST ${anchoMm}×${altoMm}mm @ ${dpi}dpi, tipo=$tipo → ${bmp.width}x${bmp.height}px ═══")
             try {
-                enviarImagen(stream, bmp)
+                enviarImagen(stream, bmp, tipo)
                 ulog("═══ Fin del test ═══")
             } catch (e: Exception) {
                 ulog("❌ Error enviando: ${e.message}")
@@ -216,11 +219,11 @@ class MainActivity : AppCompatActivity() {
     private suspend fun ulog(msg: String) = withContext(Dispatchers.Main) { log(msg) }
 
     // ── Protocolo Niimbot ──────────────────────────────────────────
-    private suspend fun enviarImagen(out: OutputStream, bmp: Bitmap) {
+    private suspend fun enviarImagen(out: OutputStream, bmp: Bitmap, tipo: Int) {
         val w = bmp.width
         val h = bmp.height
 
-        enviarYLoguear(out, 0x23, byteArrayOf(0x01), "SET_LABEL_TYPE")
+        enviarYLoguear(out, 0x23, byteArrayOf(tipo.toByte()), "SET_LABEL_TYPE(tipo=$tipo)")
         enviarYLoguear(out, 0x21, byteArrayOf(0x03), "SET_LABEL_DENSITY")
         enviarYLoguear(out, 0x01, byteArrayOf(0x01), "START_PRINT")
         enviarYLoguear(out, 0x20, byteArrayOf(0x01), "ALLOW_PRINT_CLEAR")
@@ -257,7 +260,7 @@ class MainActivity : AppCompatActivity() {
             return
         }
         val start = System.currentTimeMillis()
-        while (stream.available() <= 0 && System.currentTimeMillis() - start < 800) {
+        while (stream.available() <= 0 && System.currentTimeMillis() - start < 1500) {
             delay(30)
         }
         val disponible = stream.available()

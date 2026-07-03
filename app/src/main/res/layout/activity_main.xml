@@ -84,8 +84,20 @@
         </LinearLayout>
     </LinearLayout>
 
+    <LinearLayout
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="16dp">
+        <TextView android:text="Tipo de etiqueta (1=gap, 2=black mark, 3=continuo)" android:textSize="11sp" android:textColor="#888"
+            android:layout_width="wrap_content" android:layout_height="wrap_content"/>
+        <EditText android:id="@+id/etTipo" android:text="1" android:inputType="number"
+            android:layout_width="match_parent" android:layout_height="wrap_content"/>
+    </LinearLayout>
+
     <Button
         android:id="@+id/btnTest"
+
         android:text="🧪 Generar y enviar TEST"
         android:layout_width="match_parent"
         android:layout_height="56dp"
