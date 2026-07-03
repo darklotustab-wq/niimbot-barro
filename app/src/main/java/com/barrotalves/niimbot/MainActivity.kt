@@ -230,12 +230,14 @@ class MainActivity : AppCompatActivity() {
         val w = bmp.width
         val h = bmp.height
 
-        // Handshake / inicio de página
+        // Handshake / inicio de página (orden y códigos según protocolo Niimbot real)
+        sendPacket(out, 0x23, byteArrayOf(0x01))          // SET_LABEL_TYPE
+        sendPacket(out, 0x21, byteArrayOf(0x03))          // SET_LABEL_DENSITY
         sendPacket(out, 0x01, byteArrayOf(0x01))          // START_PRINT
-        sendPacket(out, 0x21, byteArrayOf(0x01))          // SET_LABEL_TYPE
-        sendPacket(out, 0x13, intToBytes2(h) + intToBytes2(w)) // SET_DIMENSION
-        sendPacket(out, 0x15, byteArrayOf(0x00, 0x01))    // SET_QUANTITY
+        sendPacket(out, 0x20, byteArrayOf(0x01))          // ALLOW_PRINT_CLEAR
         sendPacket(out, 0x03, byteArrayOf(0x01))          // START_PAGE
+        sendPacket(out, 0x13, intToBytes2(w) + intToBytes2(h)) // SET_DIMENSION (ancho, alto)
+        sendPacket(out, 0x15, byteArrayOf(0x00, 0x01))    // SET_QUANTITY
 
         // Enviar fila por fila
         for (y in 0 until h) {
@@ -245,7 +247,8 @@ class MainActivity : AppCompatActivity() {
                 val dark = (Color.red(px) + Color.green(px) + Color.blue(px)) < 382
                 if (dark) rowBytes[x / 8] = (rowBytes[x / 8].toInt() or (0x80 shr (x % 8))).toByte()
             }
-            val lineData = intToBytes2(y) + byteArrayOf(0x00, 0x00, 0x00) + rowBytes
+            // Encabezado real: y(2 bytes) + 3 bytes de conteo (0) + 1 byte de repetición (1) = 6 bytes
+            val lineData = intToBytes2(y) + byteArrayOf(0x00, 0x00, 0x00, 0x01) + rowBytes
             sendPacket(out, 0x85, lineData)
         }
 
@@ -253,6 +256,28 @@ class MainActivity : AppCompatActivity() {
         Thread.sleep(300)
         sendPacket(out, 0xF3.toByte().toInt(), byteArrayOf(0x01)) // END_PRINT
         out.flush()
+
+        // Diagnóstico: leer lo que responda la impresora (si responde algo)
+        leerRespuesta()
+    }
+
+    // Lee cualquier byte que la D110 haya devuelto, para diagnosticar en el log.
+    private fun leerRespuesta() {
+        try {
+            val stream = btSocket?.inputStream ?: return
+            Thread.sleep(400)
+            val disponible = stream.available()
+            if (disponible <= 0) {
+                lifecycleScope.launch(Dispatchers.Main) { log("📭 D110 no respondió nada") }
+                return
+            }
+            val buf = ByteArray(disponible)
+            val leidos = stream.read(buf)
+            val hex = buf.take(leidos).joinToString(" ") { "%02X".format(it) }
+            lifecycleScope.launch(Dispatchers.Main) { log("📥 Respuesta D110: $hex") }
+        } catch (e: Exception) {
+            lifecycleScope.launch(Dispatchers.Main) { log("⚠️ Error leyendo respuesta: ${e.message}") }
+        }
     }
 
     private fun sendPacket(out: OutputStream, cmd: Int, data: ByteArray) {
