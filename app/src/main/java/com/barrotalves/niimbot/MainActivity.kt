@@ -113,7 +113,15 @@ class MainActivity : AppCompatActivity() {
         btnToggle.setOnClickListener  { togglePolling() }
         btnTest.setOnClickListener    { imprimirTestDebug() }
         btnGuardar.setOnClickListener { guardarTamano() }
-        btnPreview.setOnClickListener { mostrarVistaPrevia() }
+        btnPreview.setOnClickListener {
+            mostrarVistaPrevia()
+            val anchoMm = etAncho.text.toString().toFloatOrNull() ?: 12f
+            val altoMm  = etAlto.text.toString().toFloatOrNull() ?: 20f
+            val fuenteCodigo = etFuenteCodigo.text.toString().toFloatOrNull() ?: 0f
+            val fuenteNombre = etFuenteNombre.text.toString().toFloatOrNull() ?: 0f
+            val bmp = generarEtiquetaConValores(anchoMm, altoMm, fuenteCodigo, fuenteNombre, "EJ12345", "Producto ejemplo", "1500")
+            mostrarDialogoArea(bmp, anchoMm, altoMm)
+        }
 
         mostrarVistaPrevia() // vista previa inicial con los valores cargados
 
@@ -150,6 +158,63 @@ class MainActivity : AppCompatActivity() {
     private fun formatMm(v: Float): String =
         if (v == v.toInt().toFloat()) v.toInt().toString() else v.toString()
 
+    // Muestra un cuadro de diálogo con el área EXACTA que se le manda a la impresora,
+    // marcada con un borde rojo, más los indicadores de ancho/alto en px y mm.
+    private fun mostrarDialogoArea(bmp: Bitmap, anchoMm: Float, altoMm: Float) {
+        val container = LinearLayout(this)
+        container.orientation = LinearLayout.VERTICAL
+        val pad = (16 * resources.displayMetrics.density).toInt()
+        container.setPadding(pad, pad, pad, pad)
+
+        val info = TextView(this)
+        info.text = "Área enviada a la D110:\n${bmp.width}px × ${bmp.height}px  →  ${formatMm(anchoMm)}mm × ${formatMm(altoMm)}mm\n(a 203 DPI asumidos)"
+        info.textSize = 13f
+        info.setPadding(0, 0, 0, pad)
+        container.addView(info)
+
+        // Bitmap con borde rojo marcando el límite EXACTO del área física enviada
+        val margen = 6
+        val bordered = Bitmap.createBitmap(bmp.width + margen * 2, bmp.height + margen * 2, Bitmap.Config.ARGB_8888)
+        val c = Canvas(bordered)
+        c.drawColor(Color.parseColor("#DDDDDD"))
+        c.drawBitmap(bmp, margen.toFloat(), margen.toFloat(), null)
+        val borderPaint = Paint()
+        borderPaint.color = Color.RED
+        borderPaint.style = Paint.Style.STROKE
+        borderPaint.strokeWidth = 4f
+        c.drawRect(
+            (margen - 2).toFloat(), (margen - 2).toFloat(),
+            (bmp.width + margen + 2).toFloat(), (bmp.height + margen + 2).toFloat(),
+            borderPaint
+        )
+
+        val iv = ImageView(this)
+        iv.setImageBitmap(bordered)
+        iv.adjustViewBounds = true
+        iv.layoutParams = LinearLayout.LayoutParams(
+            LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
+        )
+        container.addView(iv)
+
+        val nota = TextView(this)
+        nota.text = "El recuadro rojo es el límite EXACTO del área que le mandamos a la impresora. " +
+            "Compará esto con la etiqueta física: si el contenido no llega hasta ese borde en la realidad, " +
+            "el problema es de calibración/DPI de la D110, no del tamaño que configuramos acá."
+        nota.textSize = 11f
+        nota.setTextColor(Color.parseColor("#666666"))
+        nota.setPadding(0, pad, 0, 0)
+        container.addView(nota)
+
+        val scroll = ScrollView(this)
+        scroll.addView(container)
+
+        AlertDialog.Builder(this)
+            .setTitle("📐 Área de impresión")
+            .setView(scroll)
+            .setPositiveButton("Cerrar", null)
+            .show()
+    }
+
     private fun guardarTamano() {
         val anchoMm = etAncho.text.toString().toFloatOrNull()
         val altoMm  = etAlto.text.toString().toFloatOrNull()
@@ -183,6 +248,7 @@ class MainActivity : AppCompatActivity() {
             ulog("═══ TEST ${anchoMm}×${altoMm}mm ═══")
             try {
                 val bmp = generarEtiquetaTest(anchoMm, altoMm)
+                withContext(Dispatchers.Main) { mostrarDialogoArea(bmp, anchoMm, altoMm) }
                 enviarImagenDebug(stream, bmp)
                 ulog("═══ Fin del test ═══")
             } catch (e: Exception) {
