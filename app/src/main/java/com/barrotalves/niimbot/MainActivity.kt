@@ -58,6 +58,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var ivPreview: ImageView
     private lateinit var etAncho: EditText
     private lateinit var etAlto: EditText
+    private lateinit var etDpi: EditText
     private lateinit var etFuenteCodigo: EditText
     private lateinit var etFuenteNombre: EditText
     private lateinit var prefs: android.content.SharedPreferences
@@ -97,6 +98,7 @@ class MainActivity : AppCompatActivity() {
         ivPreview = findViewById(R.id.ivPreview)
         etAncho   = findViewById(R.id.etAncho)
         etAlto    = findViewById(R.id.etAlto)
+        etDpi     = findViewById(R.id.etDpi)
         etFuenteCodigo = findViewById(R.id.etFuenteCodigo)
         etFuenteNombre = findViewById(R.id.etFuenteNombre)
         prefs     = getSharedPreferences("niimbot_prefs", MODE_PRIVATE)
@@ -104,6 +106,7 @@ class MainActivity : AppCompatActivity() {
         // Cargar el tamaño guardado (o 12x20mm por defecto)
         etAncho.setText(formatMm(prefs.getFloat("ancho_mm", 12f)))
         etAlto.setText(formatMm(prefs.getFloat("alto_mm", 20f)))
+        etDpi.setText(formatMm(prefs.getFloat("dpi", 203f)))
         etFuenteCodigo.setText(formatMm(prefs.getFloat("fuente_codigo_px", 0f)))
         etFuenteNombre.setText(formatMm(prefs.getFloat("fuente_nombre_px", 0f)))
 
@@ -117,10 +120,11 @@ class MainActivity : AppCompatActivity() {
             mostrarVistaPrevia()
             val anchoMm = etAncho.text.toString().toFloatOrNull() ?: 12f
             val altoMm  = etAlto.text.toString().toFloatOrNull() ?: 20f
+            val dpi = etDpi.text.toString().toFloatOrNull() ?: 203f
             val fuenteCodigo = etFuenteCodigo.text.toString().toFloatOrNull() ?: 0f
             val fuenteNombre = etFuenteNombre.text.toString().toFloatOrNull() ?: 0f
-            val bmp = generarEtiquetaConValores(anchoMm, altoMm, fuenteCodigo, fuenteNombre, "EJ12345", "Producto ejemplo", "1500")
-            mostrarDialogoArea(bmp, anchoMm, altoMm)
+            val bmp = generarEtiquetaConValores(anchoMm, altoMm, dpi, fuenteCodigo, fuenteNombre, "EJ12345", "Producto ejemplo", "1500")
+            mostrarDialogoArea(bmp, anchoMm, altoMm, dpi)
         }
 
         mostrarVistaPrevia() // vista previa inicial con los valores cargados
@@ -143,10 +147,11 @@ class MainActivity : AppCompatActivity() {
         try {
             val anchoMm = etAncho.text.toString().toFloatOrNull() ?: 12f
             val altoMm  = etAlto.text.toString().toFloatOrNull() ?: 20f
+            val dpi = etDpi.text.toString().toFloatOrNull() ?: 203f
             val fuenteCodigo = etFuenteCodigo.text.toString().toFloatOrNull() ?: 0f
             val fuenteNombre = etFuenteNombre.text.toString().toFloatOrNull() ?: 0f
             val bmp = generarEtiquetaConValores(
-                anchoMm, altoMm, fuenteCodigo, fuenteNombre,
+                anchoMm, altoMm, dpi, fuenteCodigo, fuenteNombre,
                 "EJ12345", "Producto ejemplo", "1500"
             )
             ivPreview.setImageBitmap(bmp)
@@ -160,14 +165,14 @@ class MainActivity : AppCompatActivity() {
 
     // Muestra un cuadro de diálogo con el área EXACTA que se le manda a la impresora,
     // marcada con un borde rojo, más los indicadores de ancho/alto en px y mm.
-    private fun mostrarDialogoArea(bmp: Bitmap, anchoMm: Float, altoMm: Float) {
+    private fun mostrarDialogoArea(bmp: Bitmap, anchoMm: Float, altoMm: Float, dpi: Float) {
         val container = LinearLayout(this)
         container.orientation = LinearLayout.VERTICAL
         val pad = (16 * resources.displayMetrics.density).toInt()
         container.setPadding(pad, pad, pad, pad)
 
         val info = TextView(this)
-        info.text = "Área enviada a la D110:\n${bmp.width}px × ${bmp.height}px  →  ${formatMm(anchoMm)}mm × ${formatMm(altoMm)}mm\n(a 203 DPI asumidos)"
+        info.text = "Área enviada a la D110:\n${bmp.width}px × ${bmp.height}px  →  ${formatMm(anchoMm)}mm × ${formatMm(altoMm)}mm\n(a ${formatMm(dpi)} DPI)"
         info.textSize = 13f
         info.setPadding(0, 0, 0, pad)
         container.addView(info)
@@ -218,19 +223,21 @@ class MainActivity : AppCompatActivity() {
     private fun guardarTamano() {
         val anchoMm = etAncho.text.toString().toFloatOrNull()
         val altoMm  = etAlto.text.toString().toFloatOrNull()
+        val dpi = etDpi.text.toString().toFloatOrNull()
         val fuenteCodigo = etFuenteCodigo.text.toString().toFloatOrNull() ?: 0f
         val fuenteNombre = etFuenteNombre.text.toString().toFloatOrNull() ?: 0f
-        if (anchoMm == null || altoMm == null || anchoMm <= 0 || altoMm <= 0) {
-            log("❌ Tamaño inválido, revisá los valores")
+        if (anchoMm == null || altoMm == null || anchoMm <= 0 || altoMm <= 0 || dpi == null || dpi <= 0) {
+            log("❌ Tamaño o DPI inválido, revisá los valores")
             return
         }
         prefs.edit()
             .putFloat("ancho_mm", anchoMm)
             .putFloat("alto_mm", altoMm)
+            .putFloat("dpi", dpi)
             .putFloat("fuente_codigo_px", fuenteCodigo)
             .putFloat("fuente_nombre_px", fuenteNombre)
             .apply()
-        log("💾 Guardado: ${formatMm(anchoMm)}x${formatMm(altoMm)}mm, letra código=${if (fuenteCodigo>0) fuenteCodigo else "auto"}, letra nombre=${if (fuenteNombre>0) fuenteNombre else "auto"}")
+        log("💾 Guardado: ${formatMm(anchoMm)}x${formatMm(altoMm)}mm a ${formatMm(dpi)}dpi, letra código=${if (fuenteCodigo>0) fuenteCodigo else "auto"}, letra nombre=${if (fuenteNombre>0) fuenteNombre else "auto"}")
         mostrarVistaPrevia()
     }
 
@@ -243,12 +250,13 @@ class MainActivity : AppCompatActivity() {
         }
         val anchoMm = etAncho.text.toString().toFloatOrNull() ?: 12f
         val altoMm  = etAlto.text.toString().toFloatOrNull() ?: 20f
+        val dpi = etDpi.text.toString().toFloatOrNull() ?: 203f
 
         lifecycleScope.launch(Dispatchers.IO) {
-            ulog("═══ TEST ${anchoMm}×${altoMm}mm ═══")
+            ulog("═══ TEST ${anchoMm}×${altoMm}mm a ${dpi}dpi ═══")
             try {
-                val bmp = generarEtiquetaTest(anchoMm, altoMm)
-                withContext(Dispatchers.Main) { mostrarDialogoArea(bmp, anchoMm, altoMm) }
+                val bmp = generarEtiquetaTest(anchoMm, altoMm, dpi)
+                withContext(Dispatchers.Main) { mostrarDialogoArea(bmp, anchoMm, altoMm, dpi) }
                 enviarImagenDebug(stream, bmp)
                 ulog("═══ Fin del test ═══")
             } catch (e: Exception) {
@@ -259,11 +267,11 @@ class MainActivity : AppCompatActivity() {
 
     private suspend fun ulog(msg: String) = withContext(Dispatchers.Main) { log(msg) }
 
-    private fun generarEtiquetaTest(anchoMm: Float, altoMm: Float): Bitmap {
+    private fun generarEtiquetaTest(anchoMm: Float, altoMm: Float, dpi: Float): Bitmap {
         // Mismo esquema que generarEtiquetaConValores: tamaño físico fijo (w,h),
         // contenido dibujado "acostado" y rotado al final.
-        val w = Math.round(anchoMm / 25.4f * 203f)
-        val h = Math.round(altoMm / 25.4f * 203f)
+        val w = Math.round(anchoMm / 25.4f * dpi)
+        val h = Math.round(altoMm / 25.4f * dpi)
         val contentW = h
         val contentH = w
         val content = Bitmap.createBitmap(contentW, contentH, Bitmap.Config.ARGB_8888)
@@ -417,21 +425,22 @@ class MainActivity : AppCompatActivity() {
     private fun generarEtiqueta(codigo: String, nombre: String, precio: String): Bitmap {
         val anchoMm = prefs.getFloat("ancho_mm", 12f)
         val altoMm  = prefs.getFloat("alto_mm", 20f)
+        val dpi = prefs.getFloat("dpi", 203f)
         val fuenteCodigo = prefs.getFloat("fuente_codigo_px", 0f)
         val fuenteNombre = prefs.getFloat("fuente_nombre_px", 0f)
-        return generarEtiquetaConValores(anchoMm, altoMm, fuenteCodigo, fuenteNombre, codigo, nombre, precio)
+        return generarEtiquetaConValores(anchoMm, altoMm, dpi, fuenteCodigo, fuenteNombre, codigo, nombre, precio)
     }
 
     // Genera la etiqueta con valores explícitos (usado tanto por los pedidos automáticos
     // como por la vista previa, para que ambos muestren siempre lo mismo).
     private fun generarEtiquetaConValores(
-        anchoMm: Float, altoMm: Float, fuenteCodigoPx: Float, fuenteNombrePx: Float,
+        anchoMm: Float, altoMm: Float, dpi: Float, fuenteCodigoPx: Float, fuenteNombrePx: Float,
         codigo: String, nombre: String, precio: String
     ): Bitmap {
         // Tamaño FÍSICO real que le mandamos a la impresora (esto nunca se rota,
         // tiene que coincidir siempre con el ancho real del cabezal).
-        val W = Math.round(anchoMm / 25.4f * 203f)
-        val H = Math.round(altoMm / 25.4f * 203f)
+        val W = Math.round(anchoMm / 25.4f * dpi)
+        val H = Math.round(altoMm / 25.4f * dpi)
 
         // Dibujamos el CONTENIDO "acostado" (W y H invertidos) y lo rotamos 90°
         // al final, para que el bitmap resultante quede exactamente en W x H físico.
