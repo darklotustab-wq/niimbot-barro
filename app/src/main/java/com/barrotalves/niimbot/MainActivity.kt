@@ -55,6 +55,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnGuardar: Button
     private lateinit var etAncho: EditText
     private lateinit var etAlto: EditText
+    private lateinit var etFuenteCodigo: EditText
+    private lateinit var etFuenteNombre: EditText
     private lateinit var prefs: android.content.SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -69,11 +71,15 @@ class MainActivity : AppCompatActivity() {
         btnGuardar= findViewById(R.id.btnGuardar)
         etAncho   = findViewById(R.id.etAncho)
         etAlto    = findViewById(R.id.etAlto)
+        etFuenteCodigo = findViewById(R.id.etFuenteCodigo)
+        etFuenteNombre = findViewById(R.id.etFuenteNombre)
         prefs     = getSharedPreferences("niimbot_prefs", MODE_PRIVATE)
 
         // Cargar el tamaño guardado (o 12x20mm por defecto)
         etAncho.setText(formatMm(prefs.getFloat("ancho_mm", 12f)))
         etAlto.setText(formatMm(prefs.getFloat("alto_mm", 20f)))
+        etFuenteCodigo.setText(formatMm(prefs.getFloat("fuente_codigo_px", 0f)))
+        etFuenteNombre.setText(formatMm(prefs.getFloat("fuente_nombre_px", 0f)))
 
         requestPerms()
 
@@ -89,12 +95,19 @@ class MainActivity : AppCompatActivity() {
     private fun guardarTamano() {
         val anchoMm = etAncho.text.toString().toFloatOrNull()
         val altoMm  = etAlto.text.toString().toFloatOrNull()
+        val fuenteCodigo = etFuenteCodigo.text.toString().toFloatOrNull() ?: 0f
+        val fuenteNombre = etFuenteNombre.text.toString().toFloatOrNull() ?: 0f
         if (anchoMm == null || altoMm == null || anchoMm <= 0 || altoMm <= 0) {
             log("❌ Tamaño inválido, revisá los valores")
             return
         }
-        prefs.edit().putFloat("ancho_mm", anchoMm).putFloat("alto_mm", altoMm).apply()
-        log("💾 Guardado: ${formatMm(anchoMm)}x${formatMm(altoMm)}mm — se va a usar en los pedidos automáticos")
+        prefs.edit()
+            .putFloat("ancho_mm", anchoMm)
+            .putFloat("alto_mm", altoMm)
+            .putFloat("fuente_codigo_px", fuenteCodigo)
+            .putFloat("fuente_nombre_px", fuenteNombre)
+            .apply()
+        log("💾 Guardado: ${formatMm(anchoMm)}x${formatMm(altoMm)}mm, letra código=${if (fuenteCodigo>0) fuenteCodigo else "auto"}, letra nombre=${if (fuenteNombre>0) fuenteNombre else "auto"}")
     }
 
     // ── Modo diagnóstico: imprime un test con tamaño ajustable y log paso a paso ──
@@ -295,13 +308,15 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Código + precio en una sola línea abajo (no entra nombre + precio + código por separado)
-        paint.textSize = (H * 0.14f).coerceAtLeast(10f)
+        val fuenteCodigo = prefs.getFloat("fuente_codigo_px", 0f)
+        paint.textSize = if (fuenteCodigo > 0) fuenteCodigo else (H * 0.14f).coerceAtLeast(10f)
         paint.textAlign = Paint.Align.CENTER
         val linea1 = if (precio.isNotEmpty()) "$codigo   $ $precio" else codigo
         canvas.drawText(linea1, W / 2f, altoBarras + 20f, paint)
 
         if (nombre.isNotEmpty()) {
-            paint.textSize = (H * 0.10f).coerceAtLeast(8f)
+            val fuenteNombre = prefs.getFloat("fuente_nombre_px", 0f)
+            paint.textSize = if (fuenteNombre > 0) fuenteNombre else (H * 0.10f).coerceAtLeast(8f)
             canvas.drawText(nombre.take(40), W / 2f, (H - 6).toFloat(), paint)
         }
         return bmp
