@@ -52,7 +52,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginEnd="6dp">
-            <TextView android:text="Ancho (mm)" android:textSize="11sp" android:textColor="#888"/>
+            <TextView android:text="Ancho (mm)" android:textSize="11sp" android:textColor="#888"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"/>
             <EditText android:id="@+id/etAncho" android:text="12" android:inputType="numberDecimal"
                 android:layout_width="match_parent" android:layout_height="wrap_content"/>
         </LinearLayout>
@@ -64,7 +65,8 @@
             android:layout_weight="1"
             android:layout_marginStart="6dp"
             android:layout_marginEnd="6dp">
-            <TextView android:text="Alto (mm)" android:textSize="11sp" android:textColor="#888"/>
+            <TextView android:text="Alto (mm)" android:textSize="11sp" android:textColor="#888"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"/>
             <EditText android:id="@+id/etAlto" android:text="20" android:inputType="numberDecimal"
                 android:layout_width="match_parent" android:layout_height="wrap_content"/>
         </LinearLayout>
@@ -75,7 +77,8 @@
             android:layout_height="wrap_content"
             android:layout_weight="1"
             android:layout_marginStart="6dp">
-            <TextView android:text="DPI" android:textSize="11sp" android:textColor="#888"/>
+            <TextView android:text="DPI" android:textSize="11sp" android:textColor="#888"
+                android:layout_width="wrap_content" android:layout_height="wrap_content"/>
             <EditText android:id="@+id/etDpi" android:text="203" android:inputType="numberDecimal"
                 android:layout_width="match_parent" android:layout_height="wrap_content"/>
         </LinearLayout>
