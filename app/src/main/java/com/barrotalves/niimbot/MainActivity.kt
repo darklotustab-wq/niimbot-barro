@@ -79,6 +79,18 @@ class MainActivity : AppCompatActivity() {
             previousHandler?.uncaughtException(thread, ex)
         }
 
+        // Si la vez anterior la app se cayó, mostrar el motivo YA (antes de que
+        // cualquier otra cosa pueda volver a fallar y tapar el cartel).
+        val lastCrash = crashPrefs.getString("last_crash", null)
+        if (lastCrash != null) {
+            AlertDialog.Builder(this)
+                .setTitle("⚠️ La app se cerró la vez anterior")
+                .setMessage(lastCrash)
+                .setPositiveButton("OK") { _, _ -> crashPrefs.edit().remove("last_crash").apply() }
+                .setCancelable(false)
+                .show()
+        }
+
         try {
             setContentView(R.layout.activity_main)
         } catch (e: Exception) {
@@ -128,17 +140,6 @@ class MainActivity : AppCompatActivity() {
         }
 
         mostrarVistaPrevia() // vista previa inicial con los valores cargados
-
-        // Si la vez anterior la app se cayó, mostrar el motivo ahora
-        val lastCrash = crashPrefs.getString("last_crash", null)
-        if (lastCrash != null) {
-            AlertDialog.Builder(this)
-                .setTitle("⚠️ La app se cerró la vez anterior")
-                .setMessage(lastCrash)
-                .setPositiveButton("OK") { _, _ -> crashPrefs.edit().remove("last_crash").apply() }
-                .setCancelable(false)
-                .show()
-        }
     }
 
     // Genera una vista previa (con datos de ejemplo) usando los valores actuales
