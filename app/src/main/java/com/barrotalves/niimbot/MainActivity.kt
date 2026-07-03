@@ -192,35 +192,33 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun generarEtiqueta(codigo: String, nombre: String, precio: String): Bitmap {
-        // Dimensiones para rollo 40mm × 30mm a 203 DPI
+        // Dimensiones reales del rollo: 40mm × 12mm a 203 DPI (~320 × 96 px)
         val W = 320
-        val H = 240
+        val H = 96
         val bmp = Bitmap.createBitmap(W, H, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bmp)
         canvas.drawColor(Color.WHITE)
 
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
-        // Código de barras
-        val bits = MultiFormatWriter().encode(codigo, BarcodeFormat.CODE_128, W - 20, 130)
+        // Código de barras (más bajo, para que entre en 12mm de alto)
+        val bits = MultiFormatWriter().encode(codigo, BarcodeFormat.CODE_128, W - 20, 52)
         paint.color = Color.BLACK
         for (x in 0 until bits.width) {
             for (y in 0 until bits.height) {
-                if (bits[x, y]) canvas.drawPoint((x + 10).toFloat(), (y + 10).toFloat(), paint)
+                if (bits[x, y]) canvas.drawPoint((x + 10).toFloat(), (y + 4).toFloat(), paint)
             }
         }
 
-        paint.textSize = 18f
+        // Código + precio en una sola línea abajo (no entra nombre + precio + código por separado)
+        paint.textSize = 13f
         paint.textAlign = Paint.Align.CENTER
-        canvas.drawText(codigo, W / 2f, 158f, paint)
+        val linea1 = if (precio.isNotEmpty()) "$codigo   $ $precio" else codigo
+        canvas.drawText(linea1, W / 2f, 70f, paint)
 
         if (nombre.isNotEmpty()) {
-            paint.textSize = 14f
-            canvas.drawText(nombre.take(36), W / 2f, 178f, paint)
-        }
-        if (precio.isNotEmpty()) {
-            paint.textSize = 16f
-            canvas.drawText("$ $precio", W / 2f, 200f, paint)
+            paint.textSize = 10f
+            canvas.drawText(nombre.take(40), W / 2f, 86f, paint)
         }
         return bmp
     }
