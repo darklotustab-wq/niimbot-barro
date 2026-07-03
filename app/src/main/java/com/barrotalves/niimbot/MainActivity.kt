@@ -110,7 +110,7 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             ulog("═══ TEST ${anchoMm}×${altoMm}mm ═══")
             try {
-                val bmp = generarEtiquetaTest(anchoMm, altoMm)
+                val bmp = rotar90(generarEtiquetaTest(anchoMm, altoMm))
                 enviarImagenDebug(stream, bmp)
                 ulog("═══ Fin del test ═══")
             } catch (e: Exception) {
@@ -253,7 +253,7 @@ class MainActivity : AppCompatActivity() {
             return false
         }
         return try {
-            val bmp = generarEtiqueta(codigo, nombre, precio)
+            val bmp = rotar90(generarEtiqueta(codigo, nombre, precio))
             repeat(cant) {
                 enviarImagen(stream, bmp)
                 Thread.sleep(500)
@@ -263,6 +263,13 @@ class MainActivity : AppCompatActivity() {
             lifecycleScope.launch(Dispatchers.Main) { log("❌ Error impresión: ${e.message}") }
             false
         }
+    }
+
+    // Rota la etiqueta 90° a la derecha (sentido horario) antes de mandarla a imprimir
+    private fun rotar90(bmp: Bitmap): Bitmap {
+        val matrix = android.graphics.Matrix()
+        matrix.postRotate(90f)
+        return Bitmap.createBitmap(bmp, 0, 0, bmp.width, bmp.height, matrix, true)
     }
 
     private fun generarEtiqueta(codigo: String, nombre: String, precio: String): Bitmap {
