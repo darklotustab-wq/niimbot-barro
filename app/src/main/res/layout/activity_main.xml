@@ -47,6 +47,52 @@
         android:layout_marginBottom="20dp"/>
 
     <TextView
+        android:text="🧪 Modo diagnóstico"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="#8B3A0F"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="6dp"/>
+
+    <LinearLayout
+        android:orientation="horizontal"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="10dp">
+
+        <EditText
+            android:id="@+id/etAncho"
+            android:text="40"
+            android:hint="Ancho mm"
+            android:inputType="numberDecimal"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginEnd="6dp"/>
+
+        <EditText
+            android:id="@+id/etAlto"
+            android:text="12"
+            android:hint="Alto mm"
+            android:inputType="numberDecimal"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginStart="6dp"/>
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btnTest"
+        android:text="🧪 Imprimir TEST"
+        android:layout_width="match_parent"
+        android:layout_height="52dp"
+        android:backgroundTint="#8B3A0F"
+        android:textColor="#FFF"
+        android:textSize="15sp"
+        android:layout_marginBottom="16dp"/>
+
+    <TextView
         android:text="Log:"
         android:textSize="13sp"
         android:textColor="#888"

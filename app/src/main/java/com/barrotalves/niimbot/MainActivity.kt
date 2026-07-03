@@ -51,6 +51,9 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvLog: TextView
     private lateinit var btnToggle: Button
     private lateinit var btnConnect: Button
+    private lateinit var btnTest: Button
+    private lateinit var etAncho: EditText
+    private lateinit var etAlto: EditText
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -60,11 +63,59 @@ class MainActivity : AppCompatActivity() {
         tvLog     = findViewById(R.id.tvLog)
         btnToggle = findViewById(R.id.btnToggle)
         btnConnect= findViewById(R.id.btnConnect)
+        btnTest   = findViewById(R.id.btnTest)
+        etAncho   = findViewById(R.id.etAncho)
+        etAlto    = findViewById(R.id.etAlto)
 
         requestPerms()
 
         btnConnect.setOnClickListener { conectarBluetooth() }
         btnToggle.setOnClickListener  { togglePolling() }
+        btnTest.setOnClickListener    { imprimirTestDebug() }
+    }
+
+    // ── Modo diagnóstico: imprime un test con tamaño ajustable y log paso a paso ──
+    private fun imprimirTestDebug() {
+        val stream = btStream
+        if (stream == null) {
+            log("❌ Conectá la D110 primero")
+            return
+        }
+        val anchoMm = etAncho.text.toString().toFloatOrNull() ?: 40f
+        val altoMm  = etAlto.text.toString().toFloatOrNull() ?: 12f
+
+        lifecycleScope.launch(Dispatchers.IO) {
+            ulog("═══ TEST ${anchoMm}×${altoMm}mm ═══")
+            try {
+                val bmp = generarEtiquetaTest(anchoMm, altoMm)
+                enviarImagenDebug(stream, bmp)
+                ulog("═══ Fin del test ═══")
+            } catch (e: Exception) {
+                ulog("❌ Excepción en test: ${e.message}")
+            }
+        }
+    }
+
+    private suspend fun ulog(msg: String) = withContext(Dispatchers.Main) { log(msg) }
+
+    private fun generarEtiquetaTest(anchoMm: Float, altoMm: Float): Bitmap {
+        val w = Math.round(anchoMm / 25.4f * 203f)
+        val h = Math.round(altoMm / 25.4f * 203f)
+        val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bmp)
+        canvas.drawColor(Color.WHITE)
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        paint.color = Color.BLACK
+        paint.style = Paint.Style.STROKE
+        paint.strokeWidth = 3f
+        canvas.drawRect(2f, 2f, (w - 2).toFloat(), (h - 2).toFloat(), paint) // borde
+        paint.style = Paint.Style.FILL
+        paint.textAlign = Paint.Align.CENTER
+        paint.textSize = (h / 3.5f).coerceAtLeast(10f)
+        canvas.drawText("TEST", w / 2f, h / 2f - 2f, paint)
+        paint.textSize = (h / 6f).coerceAtLeast(8f)
+        canvas.drawText("${anchoMm.toInt()}x${altoMm.toInt()}mm", w / 2f, h - 6f, paint)
+        return bmp
     }
 
     // ── Permisos ───────────────────────────────────────────────────
@@ -259,6 +310,66 @@ class MainActivity : AppCompatActivity() {
         leerRespuesta()
     }
 
+    // Versión de diagnóstico: loguea cada comando enviado y su respuesta inmediata.
+    private suspend fun enviarImagenDebug(out: OutputStream, bmp: Bitmap) {
+        val w = bmp.width
+        val h = bmp.height
+        ulog("Imagen: ${w}x${h}px")
+
+        enviarYLoguear(out, 0x23, byteArrayOf(0x01), "SET_LABEL_TYPE")
+        enviarYLoguear(out, 0x21, byteArrayOf(0x03), "SET_LABEL_DENSITY")
+        enviarYLoguear(out, 0x01, byteArrayOf(0x01), "START_PRINT")
+        enviarYLoguear(out, 0x20, byteArrayOf(0x01), "ALLOW_PRINT_CLEAR")
+        enviarYLoguear(out, 0x03, byteArrayOf(0x01), "START_PAGE")
+        enviarYLoguear(out, 0x13, intToBytes2(w) + intToBytes2(h), "SET_DIMENSION")
+        enviarYLoguear(out, 0x15, byteArrayOf(0x00, 0x01), "SET_QUANTITY")
+
+        ulog("Enviando $h filas de imagen...")
+        for (y in 0 until h) {
+            val rowBytes = ByteArray((w + 7) / 8)
+            for (x in 0 until w) {
+                val px = bmp.getPixel(x, y)
+                val dark = (Color.red(px) + Color.green(px) + Color.blue(px)) < 382
+                if (dark) rowBytes[x / 8] = (rowBytes[x / 8].toInt() or (0x80 shr (x % 8))).toByte()
+            }
+            val lineData = intToBytes2(y) + byteArrayOf(0x00, 0x00, 0x00, 0x01) + rowBytes
+            sendPacket(out, 0x85, lineData)
+        }
+        ulog("Filas enviadas ✓")
+
+        enviarYLoguear(out, 0xE3, byteArrayOf(0x01), "END_PAGE")
+        Thread.sleep(300)
+        enviarYLoguear(out, 0xF3, byteArrayOf(0x01), "END_PRINT")
+        out.flush()
+
+        // Consultar estado de impresión (si el firmware lo soporta)
+        Thread.sleep(300)
+        enviarYLoguear(out, 0xA3, byteArrayOf(0x01), "GET_PRINT_STATUS")
+    }
+
+    // Manda un comando y loguea inmediatamente qué respondió la impresora (o si no respondió nada).
+    private suspend fun enviarYLoguear(out: OutputStream, cmd: Int, data: ByteArray, nombre: String) {
+        sendPacket(out, cmd, data)
+        val stream = btSocket?.inputStream
+        if (stream == null) {
+            ulog("  ⚠️ $nombre: sin conexión de entrada")
+            return
+        }
+        val start = System.currentTimeMillis()
+        while (stream.available() <= 0 && System.currentTimeMillis() - start < 800) {
+            delay(30)
+        }
+        val disponible = stream.available()
+        if (disponible <= 0) {
+            ulog("  📭 $nombre: sin respuesta")
+            return
+        }
+        val buf = ByteArray(disponible)
+        val leidos = stream.read(buf)
+        val hex = buf.take(leidos).joinToString(" ") { "%02X".format(it) }
+        ulog("  📥 $nombre → $hex")
+    }
+
     // Lee cualquier byte que la D110 haya devuelto, para diagnosticar en el log.
     private fun leerRespuesta() {
         try {
@@ -312,7 +423,7 @@ class MainActivity : AppCompatActivity() {
     private fun log(msg: String) {
         Log.d("NiimbotBarro", msg)
         val text = tvLog.text.toString()
-        val lines = text.split("\n").takeLast(12)
+        val lines = text.split("\n").takeLast(40)
         tvLog.text = (lines + msg).joinToString("\n")
     }
 
