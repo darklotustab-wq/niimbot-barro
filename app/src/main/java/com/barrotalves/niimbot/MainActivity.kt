@@ -1,6 +1,7 @@
 package com.barrotalves.niimbot
 
 import android.Manifest
+import android.app.AlertDialog
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothSocket
@@ -63,7 +64,28 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
+
+        // Capturador de errores: si la app se cae, guarda el motivo exacto
+        // para poder mostrarlo en la próxima apertura (diagnóstico sin cable).
+        val crashPrefs = getSharedPreferences("niimbot_crash", MODE_PRIVATE)
+        val previousHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, ex ->
+            try {
+                val sw = java.io.StringWriter()
+                ex.printStackTrace(java.io.PrintWriter(sw))
+                crashPrefs.edit().putString("last_crash", sw.toString()).commit()
+            } catch (_: Exception) {}
+            previousHandler?.uncaughtException(thread, ex)
+        }
+
+        try {
+            setContentView(R.layout.activity_main)
+        } catch (e: Exception) {
+            val sw = java.io.StringWriter()
+            e.printStackTrace(java.io.PrintWriter(sw))
+            crashPrefs.edit().putString("last_crash", "setContentView: " + sw.toString()).commit()
+            throw e
+        }
 
         tvStatus  = findViewById(R.id.tvStatus)
         tvLog     = findViewById(R.id.tvLog)
@@ -94,6 +116,17 @@ class MainActivity : AppCompatActivity() {
         btnPreview.setOnClickListener { mostrarVistaPrevia() }
 
         mostrarVistaPrevia() // vista previa inicial con los valores cargados
+
+        // Si la vez anterior la app se cayó, mostrar el motivo ahora
+        val lastCrash = crashPrefs.getString("last_crash", null)
+        if (lastCrash != null) {
+            AlertDialog.Builder(this)
+                .setTitle("⚠️ La app se cerró la vez anterior")
+                .setMessage(lastCrash)
+                .setPositiveButton("OK") { _, _ -> crashPrefs.edit().remove("last_crash").apply() }
+                .setCancelable(false)
+                .show()
+        }
     }
 
     // Genera una vista previa (con datos de ejemplo) usando los valores actuales
