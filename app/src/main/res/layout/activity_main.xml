@@ -61,25 +61,45 @@
         android:layout_height="wrap_content"
         android:paddingBottom="10dp">
 
-        <EditText
-            android:id="@+id/etAncho"
-            android:text="12"
-            android:hint="Ancho mm"
-            android:inputType="numberDecimal"
+        <LinearLayout
+            android:orientation="vertical"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginEnd="6dp"/>
+            android:layout_marginEnd="6dp">
 
-        <EditText
-            android:id="@+id/etAlto"
-            android:text="20"
-            android:hint="Alto mm"
-            android:inputType="numberDecimal"
+            <TextView
+                android:text="Ancho (mm)"
+                android:textSize="11sp"
+                android:textColor="#888"/>
+
+            <EditText
+                android:id="@+id/etAncho"
+                android:text="12"
+                android:inputType="numberDecimal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="6dp"/>
+            android:layout_marginStart="6dp">
+
+            <TextView
+                android:text="Alto (mm)"
+                android:textSize="11sp"
+                android:textColor="#888"/>
+
+            <EditText
+                android:id="@+id/etAlto"
+                android:text="20"
+                android:inputType="numberDecimal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
     </LinearLayout>
 
     <LinearLayout
@@ -88,55 +108,111 @@
         android:layout_height="wrap_content"
         android:paddingBottom="10dp">
 
-        <EditText
-            android:id="@+id/etFuenteCodigo"
-            android:text="0"
-            android:hint="Letra código (0=auto)"
-            android:inputType="numberDecimal"
+        <LinearLayout
+            android:orientation="vertical"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginEnd="6dp"/>
+            android:layout_marginEnd="6dp">
 
-        <EditText
-            android:id="@+id/etFuenteNombre"
-            android:text="0"
-            android:hint="Letra nombre (0=auto)"
-            android:inputType="numberDecimal"
+            <TextView
+                android:text="Letra código (px, 0=auto)"
+                android:textSize="11sp"
+                android:textColor="#888"/>
+
+            <EditText
+                android:id="@+id/etFuenteCodigo"
+                android:text="0"
+                android:inputType="numberDecimal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:layout_marginStart="6dp"/>
+            android:layout_marginStart="6dp">
+
+            <TextView
+                android:text="Letra nombre (px, 0=auto)"
+                android:textSize="11sp"
+                android:textColor="#888"/>
+
+            <EditText
+                android:id="@+id/etFuenteNombre"
+                android:text="0"
+                android:inputType="numberDecimal"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
     </LinearLayout>
 
     <LinearLayout
         android:orientation="horizontal"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:paddingBottom="16dp">
+        android:paddingBottom="10dp">
 
         <Button
             android:id="@+id/btnGuardar"
-            android:text="💾 Guardar tamaño"
+            android:text="💾 Guardar"
             android:layout_width="0dp"
             android:layout_height="52dp"
             android:layout_weight="1"
             android:backgroundTint="#455A64"
             android:textColor="#FFF"
-            android:textSize="13sp"
-            android:layout_marginEnd="6dp"/>
+            android:textSize="12sp"
+            android:layout_marginEnd="4dp"/>
+
+        <Button
+            android:id="@+id/btnPreview"
+            android:text="👁 Vista previa"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:backgroundTint="#5D4037"
+            android:textColor="#FFF"
+            android:textSize="12sp"
+            android:layout_marginStart="4dp"
+            android:layout_marginEnd="4dp"/>
 
         <Button
             android:id="@+id/btnTest"
-            android:text="🧪 Imprimir TEST"
+            android:text="🧪 Imprimir"
             android:layout_width="0dp"
             android:layout_height="52dp"
             android:layout_weight="1"
             android:backgroundTint="#8B3A0F"
             android:textColor="#FFF"
-            android:textSize="13sp"
-            android:layout_marginStart="6dp"/>
+            android:textSize="12sp"
+            android:layout_marginStart="4dp"/>
     </LinearLayout>
+
+    <TextView
+        android:text="Vista previa (aproximada, ya rotada como sale impresa):"
+        android:textSize="11sp"
+        android:textColor="#888"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingBottom="4dp"/>
+
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#EFEFEF"
+        android:padding="8dp"
+        android:layout_marginBottom="14dp">
+
+        <ImageView
+            android:id="@+id/ivPreview"
+            android:layout_width="match_parent"
+            android:layout_height="140dp"
+            android:scaleType="fitCenter"
+            android:background="#FFFFFF"
+            android:contentDescription="Vista previa de la etiqueta"/>
+    </FrameLayout>
 
     <TextView
         android:text="Log:"

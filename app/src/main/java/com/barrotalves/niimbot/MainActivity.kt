@@ -53,6 +53,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnConnect: Button
     private lateinit var btnTest: Button
     private lateinit var btnGuardar: Button
+    private lateinit var btnPreview: Button
+    private lateinit var ivPreview: ImageView
     private lateinit var etAncho: EditText
     private lateinit var etAlto: EditText
     private lateinit var etFuenteCodigo: EditText
@@ -69,6 +71,8 @@ class MainActivity : AppCompatActivity() {
         btnConnect= findViewById(R.id.btnConnect)
         btnTest   = findViewById(R.id.btnTest)
         btnGuardar= findViewById(R.id.btnGuardar)
+        btnPreview= findViewById(R.id.btnPreview)
+        ivPreview = findViewById(R.id.ivPreview)
         etAncho   = findViewById(R.id.etAncho)
         etAlto    = findViewById(R.id.etAlto)
         etFuenteCodigo = findViewById(R.id.etFuenteCodigo)
@@ -87,6 +91,27 @@ class MainActivity : AppCompatActivity() {
         btnToggle.setOnClickListener  { togglePolling() }
         btnTest.setOnClickListener    { imprimirTestDebug() }
         btnGuardar.setOnClickListener { guardarTamano() }
+        btnPreview.setOnClickListener { mostrarVistaPrevia() }
+
+        mostrarVistaPrevia() // vista previa inicial con los valores cargados
+    }
+
+    // Genera una vista previa (con datos de ejemplo) usando los valores actuales
+    // de los campos, sin necesidad de guardarlos ni de imprimir nada.
+    private fun mostrarVistaPrevia() {
+        try {
+            val anchoMm = etAncho.text.toString().toFloatOrNull() ?: 12f
+            val altoMm  = etAlto.text.toString().toFloatOrNull() ?: 20f
+            val fuenteCodigo = etFuenteCodigo.text.toString().toFloatOrNull() ?: 0f
+            val fuenteNombre = etFuenteNombre.text.toString().toFloatOrNull() ?: 0f
+            val bmp = generarEtiquetaConValores(
+                anchoMm, altoMm, fuenteCodigo, fuenteNombre,
+                "EJ12345", "Producto ejemplo", "1500"
+            )
+            ivPreview.setImageBitmap(bmp)
+        } catch (e: Exception) {
+            log("⚠️ No se pudo generar la vista previa: ${e.message}")
+        }
     }
 
     private fun formatMm(v: Float): String =
@@ -108,6 +133,7 @@ class MainActivity : AppCompatActivity() {
             .putFloat("fuente_nombre_px", fuenteNombre)
             .apply()
         log("💾 Guardado: ${formatMm(anchoMm)}x${formatMm(altoMm)}mm, letra código=${if (fuenteCodigo>0) fuenteCodigo else "auto"}, letra nombre=${if (fuenteNombre>0) fuenteNombre else "auto"}")
+        mostrarVistaPrevia()
     }
 
     // ── Modo diagnóstico: imprime un test con tamaño ajustable y log paso a paso ──
@@ -123,7 +149,7 @@ class MainActivity : AppCompatActivity() {
         lifecycleScope.launch(Dispatchers.IO) {
             ulog("═══ TEST ${anchoMm}×${altoMm}mm ═══")
             try {
-                val bmp = rotar90(generarEtiquetaTest(anchoMm, altoMm))
+                val bmp = generarEtiquetaTest(anchoMm, altoMm)
                 enviarImagenDebug(stream, bmp)
                 ulog("═══ Fin del test ═══")
             } catch (e: Exception) {
@@ -135,23 +161,27 @@ class MainActivity : AppCompatActivity() {
     private suspend fun ulog(msg: String) = withContext(Dispatchers.Main) { log(msg) }
 
     private fun generarEtiquetaTest(anchoMm: Float, altoMm: Float): Bitmap {
+        // Mismo esquema que generarEtiquetaConValores: tamaño físico fijo (w,h),
+        // contenido dibujado "acostado" y rotado al final.
         val w = Math.round(anchoMm / 25.4f * 203f)
         val h = Math.round(altoMm / 25.4f * 203f)
-        val bmp = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bmp)
+        val contentW = h
+        val contentH = w
+        val content = Bitmap.createBitmap(contentW, contentH, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(content)
         canvas.drawColor(Color.WHITE)
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
         paint.color = Color.BLACK
         paint.style = Paint.Style.STROKE
         paint.strokeWidth = 3f
-        canvas.drawRect(2f, 2f, (w - 2).toFloat(), (h - 2).toFloat(), paint) // borde
+        canvas.drawRect(2f, 2f, (contentW - 2).toFloat(), (contentH - 2).toFloat(), paint) // borde
         paint.style = Paint.Style.FILL
         paint.textAlign = Paint.Align.CENTER
-        paint.textSize = (h / 3.5f).coerceAtLeast(10f)
-        canvas.drawText("TEST", w / 2f, h / 2f - 2f, paint)
-        paint.textSize = (h / 6f).coerceAtLeast(8f)
-        canvas.drawText("${anchoMm.toInt()}x${altoMm.toInt()}mm", w / 2f, h - 6f, paint)
-        return bmp
+        paint.textSize = (contentH / 3.5f).coerceAtLeast(10f)
+        canvas.drawText("TEST", contentW / 2f, contentH / 2f - 2f, paint)
+        paint.textSize = (contentH / 6f).coerceAtLeast(8f)
+        canvas.drawText("${anchoMm.toInt()}x${altoMm.toInt()}mm", contentW / 2f, contentH - 6f, paint)
+        return rotar90(content)
     }
 
     // ── Permisos ───────────────────────────────────────────────────
@@ -266,7 +296,7 @@ class MainActivity : AppCompatActivity() {
             return false
         }
         return try {
-            val bmp = rotar90(generarEtiqueta(codigo, nombre, precio))
+            val bmp = generarEtiqueta(codigo, nombre, precio)
             repeat(cant) {
                 enviarImagen(stream, bmp)
                 Thread.sleep(500)
@@ -286,20 +316,37 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun generarEtiqueta(codigo: String, nombre: String, precio: String): Bitmap {
-        // Tamaño tomado de lo guardado en el modo diagnóstico (default 12x20mm)
         val anchoMm = prefs.getFloat("ancho_mm", 12f)
         val altoMm  = prefs.getFloat("alto_mm", 20f)
+        val fuenteCodigo = prefs.getFloat("fuente_codigo_px", 0f)
+        val fuenteNombre = prefs.getFloat("fuente_nombre_px", 0f)
+        return generarEtiquetaConValores(anchoMm, altoMm, fuenteCodigo, fuenteNombre, codigo, nombre, precio)
+    }
+
+    // Genera la etiqueta con valores explícitos (usado tanto por los pedidos automáticos
+    // como por la vista previa, para que ambos muestren siempre lo mismo).
+    private fun generarEtiquetaConValores(
+        anchoMm: Float, altoMm: Float, fuenteCodigoPx: Float, fuenteNombrePx: Float,
+        codigo: String, nombre: String, precio: String
+    ): Bitmap {
+        // Tamaño FÍSICO real que le mandamos a la impresora (esto nunca se rota,
+        // tiene que coincidir siempre con el ancho real del cabezal).
         val W = Math.round(anchoMm / 25.4f * 203f)
         val H = Math.round(altoMm / 25.4f * 203f)
-        val bmp = Bitmap.createBitmap(W, H, Bitmap.Config.ARGB_8888)
-        val canvas = Canvas(bmp)
+
+        // Dibujamos el CONTENIDO "acostado" (W y H invertidos) y lo rotamos 90°
+        // al final, para que el bitmap resultante quede exactamente en W x H físico.
+        val contentW = H
+        val contentH = W
+        val content = Bitmap.createBitmap(contentW, contentH, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(content)
         canvas.drawColor(Color.WHITE)
 
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
-        // Código de barras (proporcional al alto disponible)
-        val altoBarras = (H * 0.55f).toInt().coerceAtLeast(20)
-        val bits = MultiFormatWriter().encode(codigo, BarcodeFormat.CODE_128, W - 20, altoBarras)
+        // Código de barras (proporcional al alto disponible del contenido)
+        val altoBarras = (contentH * 0.55f).toInt().coerceAtLeast(20)
+        val bits = MultiFormatWriter().encode(codigo, BarcodeFormat.CODE_128, contentW - 20, altoBarras)
         paint.color = Color.BLACK
         for (x in 0 until bits.width) {
             for (y in 0 until bits.height) {
@@ -308,18 +355,16 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Código + precio en una sola línea abajo (no entra nombre + precio + código por separado)
-        val fuenteCodigo = prefs.getFloat("fuente_codigo_px", 0f)
-        paint.textSize = if (fuenteCodigo > 0) fuenteCodigo else (H * 0.14f).coerceAtLeast(10f)
+        paint.textSize = if (fuenteCodigoPx > 0) fuenteCodigoPx else (contentH * 0.14f).coerceAtLeast(10f)
         paint.textAlign = Paint.Align.CENTER
         val linea1 = if (precio.isNotEmpty()) "$codigo   $ $precio" else codigo
-        canvas.drawText(linea1, W / 2f, altoBarras + 20f, paint)
+        canvas.drawText(linea1, contentW / 2f, altoBarras + 20f, paint)
 
         if (nombre.isNotEmpty()) {
-            val fuenteNombre = prefs.getFloat("fuente_nombre_px", 0f)
-            paint.textSize = if (fuenteNombre > 0) fuenteNombre else (H * 0.10f).coerceAtLeast(8f)
-            canvas.drawText(nombre.take(40), W / 2f, (H - 6).toFloat(), paint)
+            paint.textSize = if (fuenteNombrePx > 0) fuenteNombrePx else (contentH * 0.10f).coerceAtLeast(8f)
+            canvas.drawText(nombre.take(40), contentW / 2f, (contentH - 6).toFloat(), paint)
         }
-        return bmp
+        return rotar90(content)
     }
 
     // Protocolo Niimbot simplificado (línea a línea)
