@@ -52,8 +52,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnToggle: Button
     private lateinit var btnConnect: Button
     private lateinit var btnTest: Button
+    private lateinit var btnGuardar: Button
     private lateinit var etAncho: EditText
     private lateinit var etAlto: EditText
+    private lateinit var prefs: android.content.SharedPreferences
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -64,14 +66,35 @@ class MainActivity : AppCompatActivity() {
         btnToggle = findViewById(R.id.btnToggle)
         btnConnect= findViewById(R.id.btnConnect)
         btnTest   = findViewById(R.id.btnTest)
+        btnGuardar= findViewById(R.id.btnGuardar)
         etAncho   = findViewById(R.id.etAncho)
         etAlto    = findViewById(R.id.etAlto)
+        prefs     = getSharedPreferences("niimbot_prefs", MODE_PRIVATE)
+
+        // Cargar el tamaño guardado (o 12x20mm por defecto)
+        etAncho.setText(formatMm(prefs.getFloat("ancho_mm", 12f)))
+        etAlto.setText(formatMm(prefs.getFloat("alto_mm", 20f)))
 
         requestPerms()
 
         btnConnect.setOnClickListener { conectarBluetooth() }
         btnToggle.setOnClickListener  { togglePolling() }
         btnTest.setOnClickListener    { imprimirTestDebug() }
+        btnGuardar.setOnClickListener { guardarTamano() }
+    }
+
+    private fun formatMm(v: Float): String =
+        if (v == v.toInt().toFloat()) v.toInt().toString() else v.toString()
+
+    private fun guardarTamano() {
+        val anchoMm = etAncho.text.toString().toFloatOrNull()
+        val altoMm  = etAlto.text.toString().toFloatOrNull()
+        if (anchoMm == null || altoMm == null || anchoMm <= 0 || altoMm <= 0) {
+            log("❌ Tamaño inválido, revisá los valores")
+            return
+        }
+        prefs.edit().putFloat("ancho_mm", anchoMm).putFloat("alto_mm", altoMm).apply()
+        log("💾 Guardado: ${formatMm(anchoMm)}x${formatMm(altoMm)}mm — se va a usar en los pedidos automáticos")
     }
 
     // ── Modo diagnóstico: imprime un test con tamaño ajustable y log paso a paso ──
@@ -81,8 +104,8 @@ class MainActivity : AppCompatActivity() {
             log("❌ Conectá la D110 primero")
             return
         }
-        val anchoMm = etAncho.text.toString().toFloatOrNull() ?: 40f
-        val altoMm  = etAlto.text.toString().toFloatOrNull() ?: 12f
+        val anchoMm = etAncho.text.toString().toFloatOrNull() ?: 12f
+        val altoMm  = etAlto.text.toString().toFloatOrNull() ?: 20f
 
         lifecycleScope.launch(Dispatchers.IO) {
             ulog("═══ TEST ${anchoMm}×${altoMm}mm ═══")
@@ -243,17 +266,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun generarEtiqueta(codigo: String, nombre: String, precio: String): Bitmap {
-        // Dimensiones reales del rollo: 40mm × 12mm a 203 DPI (~320 × 96 px)
-        val W = 320
-        val H = 96
+        // Tamaño tomado de lo guardado en el modo diagnóstico (default 12x20mm)
+        val anchoMm = prefs.getFloat("ancho_mm", 12f)
+        val altoMm  = prefs.getFloat("alto_mm", 20f)
+        val W = Math.round(anchoMm / 25.4f * 203f)
+        val H = Math.round(altoMm / 25.4f * 203f)
         val bmp = Bitmap.createBitmap(W, H, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bmp)
         canvas.drawColor(Color.WHITE)
 
         val paint = Paint(Paint.ANTI_ALIAS_FLAG)
 
-        // Código de barras (más bajo, para que entre en 12mm de alto)
-        val bits = MultiFormatWriter().encode(codigo, BarcodeFormat.CODE_128, W - 20, 52)
+        // Código de barras (proporcional al alto disponible)
+        val altoBarras = (H * 0.55f).toInt().coerceAtLeast(20)
+        val bits = MultiFormatWriter().encode(codigo, BarcodeFormat.CODE_128, W - 20, altoBarras)
         paint.color = Color.BLACK
         for (x in 0 until bits.width) {
             for (y in 0 until bits.height) {
@@ -262,14 +288,14 @@ class MainActivity : AppCompatActivity() {
         }
 
         // Código + precio en una sola línea abajo (no entra nombre + precio + código por separado)
-        paint.textSize = 13f
+        paint.textSize = (H * 0.14f).coerceAtLeast(10f)
         paint.textAlign = Paint.Align.CENTER
         val linea1 = if (precio.isNotEmpty()) "$codigo   $ $precio" else codigo
-        canvas.drawText(linea1, W / 2f, 70f, paint)
+        canvas.drawText(linea1, W / 2f, altoBarras + 20f, paint)
 
         if (nombre.isNotEmpty()) {
-            paint.textSize = 10f
-            canvas.drawText(nombre.take(40), W / 2f, 86f, paint)
+            paint.textSize = (H * 0.10f).coerceAtLeast(8f)
+            canvas.drawText(nombre.take(40), W / 2f, (H - 6).toFloat(), paint)
         }
         return bmp
     }

@@ -63,7 +63,7 @@
 
         <EditText
             android:id="@+id/etAncho"
-            android:text="40"
+            android:text="12"
             android:hint="Ancho mm"
             android:inputType="numberDecimal"
             android:layout_width="0dp"
@@ -73,7 +73,7 @@
 
         <EditText
             android:id="@+id/etAlto"
-            android:text="12"
+            android:text="20"
             android:hint="Alto mm"
             android:inputType="numberDecimal"
             android:layout_width="0dp"
@@ -82,15 +82,34 @@
             android:layout_marginStart="6dp"/>
     </LinearLayout>
 
-    <Button
-        android:id="@+id/btnTest"
-        android:text="🧪 Imprimir TEST"
+    <LinearLayout
+        android:orientation="horizontal"
         android:layout_width="match_parent"
-        android:layout_height="52dp"
-        android:backgroundTint="#8B3A0F"
-        android:textColor="#FFF"
-        android:textSize="15sp"
-        android:layout_marginBottom="16dp"/>
+        android:layout_height="wrap_content"
+        android:paddingBottom="16dp">
+
+        <Button
+            android:id="@+id/btnGuardar"
+            android:text="💾 Guardar tamaño"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:backgroundTint="#455A64"
+            android:textColor="#FFF"
+            android:textSize="13sp"
+            android:layout_marginEnd="6dp"/>
+
+        <Button
+            android:id="@+id/btnTest"
+            android:text="🧪 Imprimir TEST"
+            android:layout_width="0dp"
+            android:layout_height="52dp"
+            android:layout_weight="1"
+            android:backgroundTint="#8B3A0F"
+            android:textColor="#FFF"
+            android:textSize="13sp"
+            android:layout_marginStart="6dp"/>
+    </LinearLayout>
 
     <TextView
         android:text="Log:"
